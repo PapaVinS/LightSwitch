@@ -1,11 +1,12 @@
 import Adafruit_DHT
- 
+from sensitive_information import temperature_pin
+
 # === Init ===
 # Set sensor type : Options are DHT11,DHT22 or AM2302
 sensor=Adafruit_DHT.DHT11
  
 # Set GPIO sensor is connected to
-gpio=2
+gpio=temperature_pin
 
 def read_temperature():
   # Use read_retry method. This will retry up to 15 times to
