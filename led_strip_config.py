@@ -59,6 +59,9 @@ class Led_Strip():
     def CHANGE_BRIGHTNESS(self, brightness_value):
         self.TURN_ON(self.current_r, self.current_g, self.current_b, brightness_value)
 
+    def SET_RGB (self, r, g, b):
+        self.TURN_ON(int(r), int(g), int(b), self.current_brightness)
+
     def TURN_OFF(self):
         self.pi.set_PWM_dutycycle(self.REDPIN     , 0.0)
         self.pi.set_PWM_dutycycle(self.GREENPIN   , 0.0)
