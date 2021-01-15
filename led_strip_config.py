@@ -67,3 +67,8 @@ class Led_Strip():
         self.pi.set_PWM_dutycycle(self.GREENPIN   , 0.0)
         self.pi.set_PWM_dutycycle(self.BLUEPIN    , 0.0)
         self.is_currently_on = False
+
+    def GET_POWER_STATUS(self):
+        if self.is_currently_on:
+            return "ON"
+        return "OFF"

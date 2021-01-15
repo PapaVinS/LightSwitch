@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask_httpauth import HTTPTokenAuth
 from lamp_config import Lamp, total_presets
 from led_strip_config import Led_Strip
 from temperature_config import read_temperature
@@ -8,9 +9,16 @@ lamp        = Lamp("192.168.177.11")
 led_strip   = Led_Strip(21, 20, 16)
 
 backend = Flask(__name__)
+auth = HTTPTokenAuth(scheme='Bearer')
+
+tokens = {
+    "7a619eb749d26688c56d3c1622f5171d80589f43f4b840ec19d851957afa4763": "User1"
+}
 # ========== END init END ==========
 
 # ========== Return Codes ========== 
+#  2    = Power successfully turned off
+#  1    = Power successfully turned on
 #  0    = Everything is fine
 # -1    = No such device
 # -2    = No such action
@@ -26,11 +34,19 @@ def hello():
 
 @backend.route('/jsontest')
 def jsontest():
-    return jsonify(
-        status="Success",
-        code=0,
-        message="Also, hello. This is the expected json output from this software.",
-    )
+    return return_code(0, "Also, hello. This is the expected json output from this software.")
+
+@auth.verify_token
+def verify_token(token):
+    if token in tokens:
+        return tokens[token]
+
+@backend.route('/authtest')
+@auth.login_required
+def authtest():
+    return return_code(0, "This is an authtest. If you can see this page, then the auth is successful.")
+    # return return_code(0, auth.current_user())
+
 # ========== END Debugging END ========== 
 
 @backend.route('/read_temperature')
@@ -48,15 +64,18 @@ def control(device_name, action):
     if device_name == "YEELIGHT":
         if action == "TURN_ON":
             lamp.TURN_ON()
-            return return_code(0, "Turning on...")
+            return return_code(1)
         
         elif action == "TURN_OFF":
             lamp.TURN_OFF()
-            return return_code(0, "Turning off...")
+            return return_code(2)
         
         elif action == "TOGGLE_POWER":
             lamp.TOGGLE_POWER()
-            return return_code(0, "Toggling power...")
+            power_status = lamp.GET_POWER_STATUS()
+            if power_status == "ON":
+                return return_code(1)
+            return return_code(2)
         
         elif action == "SET_BRIGHTNESS":
             brightness_value = uppercase_request_args.get("BRIGHTNESS_VALUE")
@@ -119,21 +138,24 @@ def control(device_name, action):
                 return return_code(0, "Lamp change successful.")
             return return_code(-3, "Incorrect arguments.")
 
+        elif action == "GET_POWER_STATUS":
+            return return_code(0, lamp.GET_POWER_STATUS())
+
         else:
             return return_code(-2)
     
     elif device_name == "LED_STRIP":
         if action == "TURN_ON":
             led_strip.TURN_ON(255, 255, 255, 100)
-            return return_code(0)
+            return return_code(1)
 
         elif action == "TOGGLE_POWER":
             if led_strip.is_currently_on:
                 led_strip.TURN_OFF()
-                return return_code(0, "Turning off...")
+                return return_code(2)
             else:
                 led_strip.TURN_ON_PRESET("BLUE_VIOLET", 20)
-                return return_code(0, "Turning on...")
+                return return_code(1)
 
         elif action == "SET_RGB":
             r_value = uppercase_request_args.get("R_VALUE")
@@ -147,7 +169,10 @@ def control(device_name, action):
 
         elif action == "TURN_OFF":
             led_strip.TURN_OFF()
-            return return_code(0, "Turning off...")
+            return return_code(2)
+
+        elif action == "GET_POWER_STATUS":
+            return return_code(0, led_strip.GET_POWER_STATUS())
 
         else:
             return return_code(-2)
@@ -190,6 +215,20 @@ def return_code(code, ext_message = ""):
             status="Success",
             code=code,
             code_details="Everything is fine.",
+            message=ext_message
+        )
+    elif code == 1:
+        return jsonify(
+            status="Success",
+            code=code,
+            code_details="Power has been successfully turned on.",
+            message=ext_message
+        )
+    elif code == 2:
+        return jsonify(
+            status="Success",
+            code=code,
+            code_details="Power has been successfully turned off.",
             message=ext_message
         )
     elif code == -1:

@@ -1,33 +1,77 @@
-import pigpio
-from datetime import datetime
-from time import sleep
-import requests
+from yeelight import Bulb
 
-# Init
-pi = pigpio.pi()
-BUTTONPIN = 3
+# options = {
+#     1: "Turn on",
+#     2: "Turn off",
+#     3: "Toggle power",
+#     4: "Set brightness",
+#     5: "Set RGB value",
+#     6: "Set HSV value",
+#     7: "Set color temperature",
+#     8: "Select preset",
+#     9: "Change lamp",
+#     10: "Get lamp properties",
+#     0: "Exit",
+# }
 
-pi.set_mode(BUTTONPIN, pigpio.INPUT)
-pi.set_pull_up_down(BUTTONPIN, pigpio.PUD_DOWN)
+presets = {
+    1: "Sleepy yellow",
+    2: "Fresh bright"
+}    
 
-# Endpoint
-URL = "http://localhost:7777/control/led_strip/toggle_power"
+total_presets = len(presets)
 
-# Send request
+class Lamp():
+    
+    def __init__(self, host_ip):
+        self.lamp = Bulb(host_ip)
+        self.effect_choice = "smooth"
+    
+    def TURN_ON(self):
+        self.lamp.turn_on(effect = self.effect_choice)
+        
+    def TURN_OFF(self):
+        self.lamp.turn_off(effect = self.effect_choice)
+        
+    def TOGGLE_POWER(self):
+        self.lamp.toggle()
+        
+    def SET_BRIGHTNESS(self, brightness_value):
+        brightness_value = int(brightness_value)
+        if (brightness_value) >= 0 and (brightness_value) <= 100:
+            self.lamp.set_brightness(brightness_value)
+        else:
+            print("Value is outside the allowed range.")
+    
+    def SET_RGB(self, R, G, B):
+        R = int(R)
+        G = int(G)
+        B = int(B)
+        self.lamp.set_rgb(R, G, B)
+    
+    def SET_HSV(self, H, S):
+        H = int(H)
+        S = int(S)
+        self.lamp.set_hsv(H, S)
+    
+    def SET_COLOR_TEMP(self, temp):
+        temp = int(temp)
+        self.lamp.set_color_temp(temp)
+    
+    def SET_PRESET(self, preset_code):
+        if (int(preset_code) == 1): # Sleepy Yellow
+            self.TURN_ON()
+            self.SET_RGB(245, 145, 0)
+        elif (int(preset_code) == 2): # Fresh Bright
+            self.TURN_ON()
+            self.SET_COLOR_TEMP(6417)
+        else:
+            print("There is no preset like that.")
+    
+    def CHANGE_TARGET_IP(self, new_ip):
+        self.lamp = Bulb(new_ip)
 
-# SAMPLE CODE
-# while True: # Run forever
-#     if pi.read(3) == 0:
-#         # print("Button was pushed!")
-#         # dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-#         # print("date and time =", dt_string)	
-
-#         # HTTP GET to toggle lamp power (it's working)
-#         print(requests.get(url = URL))
-#         sleep(0.4)
-
-def toggle_power():
-    if pi.read(3) == 0:
-        return requests.get(url = URL)
-    else:
-        return "Failed to toggle power."
+    def GET_POWER_STATUS(self):
+        lamp_properties = self.lamp.get_properties() # lamp_properties data type == dict
+        power_status = lamp_properties["power"].upper() # output = ON if lamp is on, OFF is lamp is off
+        return power_status
