@@ -5,11 +5,6 @@ class Led_Strip():
     def __init__(self, redgpio, greengpio, bluegpio):
         self.pi = pigpio.pi()
         
-        # Default values:
-        # self.REDPIN      = 21
-        # self.GREENPIN    = 20
-        # self.BLUEPIN     = 16
-        
         self.REDPIN    = redgpio
         self.GREENPIN  = greengpio
         self.BLUEPIN   = bluegpio

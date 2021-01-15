@@ -3,17 +3,14 @@ from flask_httpauth import HTTPTokenAuth
 from lamp_config import Lamp, total_presets
 from led_strip_config import Led_Strip
 from temperature_config import read_temperature
+from sensitive_information import tokens, lamp_ip, red_pin, green_pin, blue_pin
 
 # ========== init ========== 
-lamp        = Lamp("192.168.177.11")
-led_strip   = Led_Strip(21, 20, 16)
+lamp        = Lamp(lamp_ip)
+led_strip   = Led_Strip(red_pin, green_pin, blue_pin)
 
-backend = Flask(__name__)
-auth = HTTPTokenAuth(scheme='Bearer')
-
-tokens = {
-    "7a619eb749d26688c56d3c1622f5171d80589f43f4b840ec19d851957afa4763": "User1"
-}
+backend     = Flask(__name__)
+auth        = HTTPTokenAuth(scheme='Bearer')
 # ========== END init END ==========
 
 # ========== Return Codes ========== 
@@ -45,8 +42,6 @@ def verify_token(token):
 @auth.login_required
 def authtest():
     return return_code(0, "This is an authtest. If you can see this page, then the auth is successful.")
-    # return return_code(0, auth.current_user())
-
 # ========== END Debugging END ========== 
 
 @backend.route('/read_temperature')
