@@ -1,0 +1,9 @@
+Adafruit-DHT==1.4.0
+Flask==1.0.2
+Flask-HTTPAuth==4.2.0
+gpiozero==1.5.1
+gunicorn==19.9.0
+Jinja2==2.10
+pigpio==1.44
+Werkzeug==0.14.1
+yeelight==0.5.4
